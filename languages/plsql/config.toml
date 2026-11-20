@@ -1,0 +1,28 @@
+name = "PL/SQL"
+grammar = "plsql"
+path_suffixes = ["pls", "pks", "pkb", "prc", "fnc", "trg", "typ"]
+line_comments = ["-- "]
+first_line_pattern = '(?i)^\s*CREATE\s+(OR\s+REPLACE\s+)?(PROCEDURE|FUNCTION|PACKAGE|TRIGGER|TYPE)\b'
+autoclose_before = ")"
+
+[block_comment]
+start = "/*"
+prefix = ""
+end = "*/"
+tab_size = 1
+
+[[brackets]]
+start = "("
+end = ")"
+
+[[brackets]]
+start = "'"
+end = "'"
+close = true
+not_in = ["comment", "string"]
+
+[[brackets]]
+start = "\""
+end = "\""
+close = true
+not_in = ["comment", "string"]

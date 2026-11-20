@@ -1,0 +1,11 @@
+id = "oracle-plsql"
+name = "Oracle PL/SQL"
+version = "0.0.1"
+schema_version = 1
+authors = ["wahdan-amarulloh"]
+description = "PL/SQL language support for Zed: Tree-sitter grammar and syntax highlighting."
+repository = "https://github.com/wahdan-amarulloh/zed-oracle-ext"
+
+[grammars.plsql]
+repository = "https://github.com/njank/tree-sitter-plsql"
+commit = "07c7accfd5fb8c58f00abd61dd6b8141376ba6be"
