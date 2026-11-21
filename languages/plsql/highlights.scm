@@ -106,15 +106,30 @@
   (kw_anydata) (kw_anydataset) (kw_anytype) (kw_xmltype) (kw_uritype)
   (kw_sdo_geometry) (kw_sdo_georaster) (kw_sdo_topo_geometry)
   (kw_json_object_t) (kw_json_array_t) (kw_json_element_t) (kw_json_scalar_t)
-  (kw_byte)
+  (kw_json_key_list)
+  (kw_byte) (kw_pls_integer) (kw_refcursor)
 ] @type.builtin
 
-; `PLS_INTEGER` and friends are not dedicated nodes: the grammar parses them as
-; identifiers inside a datatype, so match on the text.
+; `PLS_INTEGER` and friends are not dedicated nodes in every position: the
+; grammar parses them as identifiers inside a datatype, so match on the text.
 (
-  (datatype (referenced_element ref_name: (identifier) @type.builtin))
+  (datatype
+    (referenced_element
+      ref_name: (identifier) @type.builtin))
   (#match? @type.builtin "(?i)^(pls_integer|sys_refcursor|xmltype|rowtype)$")
 )
+
+; `%TYPE` / `%ROWTYPE` references (`v_sal emp.sal%TYPE`, `r emp%ROWTYPE`): the
+; grammar masks the whole reference as an ordinary `referenced_element`, so tag
+; the reference itself as a type instead of letting it fall through to
+; @variable/@property.
+(datatype
+  (referenced_element) @type.builtin
+  (kw_datatype_type))
+
+(datatype
+  (referenced_element) @type.builtin
+  (kw_datatype_rowtype))
 
 ; ---------------------------------------------------------------------------
 ; Literals
@@ -125,6 +140,10 @@
 ] @boolean
 
 (kw_null) @constant.builtin
+
+; DUP_VAL_ON_INDEX is a dedicated grammar node (not an identifier), so it needs
+; its own pattern to join the other predefined exceptions.
+(kw_dup_val_on_index) @constant.builtin
 
 ; Predefined exceptions and predefined constants. The grammar parses these as
 ; plain identifiers, so match their names.
@@ -190,9 +209,9 @@
   (kw_autonomous_transaction) (kw_language) (kw_deterministic)
   (kw_result_cache) (kw_pipelined) (kw_parallel_enable) (kw_authid)
   (kw_exception_init) (kw_exception) (kw_exceptions)
-  (kw_member) (kw_constructor) (kw_static) (kw_map) (kw_order) (kw_self)
+  (kw_member) (kw_constructor) (kw_static) (kw_map) (kw_self)
   (kw_instantiable) (kw_final) (kw_overriding) (kw_substitutable)
-  (kw_under) (kw_object) (kw_in) (kw_out) (kw_nocopy) (kw_ref)
+  (kw_under) (kw_in) (kw_out) (kw_nocopy) (kw_ref)
 ] @keyword
 
 ; ---------------------------------------------------------------------------
@@ -208,11 +227,11 @@
   (kw_open) (kw_close) (kw_fetch) (kw_with) (kw_table) (kw_lock)
   (kw_join) (kw_inner) (kw_outer) (kw_left) (kw_right) (kw_full) (kw_cross)
   (kw_on) (kw_of) (kw_current) (kw_prior) (kw_connect) (kw_start)
-  (kw_connect_by_root) (kw_siblings) (kw_level) (kw_rowid) (kw_nulls)
+  (kw_connect_by_root) (kw_siblings) (kw_level) (kw_nulls)
   (kw_first) (kw_last) (kw_asc) (kw_desc) (kw_limit) (kw_offset)
-  (kw_rows) (kw_row) (kw_only) (kw_next) (kw_percent) (kw_ties)
+  (kw_rows) (kw_row) (kw_only) (kw_next) (kw_ties)
   (kw_partition) (kw_over) (kw_range) (kw_unbounded) (kw_preceding)
-  (kw_following) (kw_reverse) (kw_case)
+  (kw_following) (kw_reverse)
 ] @keyword
 
 ; ---------------------------------------------------------------------------
@@ -246,18 +265,18 @@
   (kw_cycle) (kw_data) (kw_database) (kw_day)
   (kw_db_role_change) (kw_ddl) (kw_debug) (kw_definer)
   (kw_deleting) (kw_depth) (kw_directory) (kw_disable)
-  (kw_disallow) (kw_disassociate) (kw_discardfile) (kw_dup_val_on_index)
+  (kw_disallow) (kw_disassociate) (kw_discardfile)
   (kw_duration) (kw_each) (kw_editionable) (kw_element)
   (kw_empty) (kw_enable) (kw_error) (kw_errors)
   (kw_escape) (kw_evalname) (kw_except) (kw_extend)
-  (kw_external) (kw_fact) (kw_filter) (kw_following)
-  (kw_follows) (kw_forall) (kw_force) (kw_foreign)
-  (kw_format) (kw_forward) (kw_function) (kw_hierarchies)
+  (kw_external) (kw_fact) (kw_filter)
+  (kw_follows) (kw_force) (kw_foreign)
+  (kw_format) (kw_forward) (kw_hierarchies)
   (kw_hour) (kw_immutable) (kw_including) (kw_increment)
   (kw_index) (kw_indicator) (kw_indices) (kw_inline)
-  (kw_inserting) (kw_instantiable) (kw_instead) (kw_invalidate)
+  (kw_inserting) (kw_instead) (kw_invalidate)
   (kw_isolation) (kw_java) (kw_keep) (kw_key)
-  (kw_last) (kw_lateral) (kw_lax) (kw_leading)
+  (kw_lateral) (kw_lax) (kw_leading)
   (kw_length) (kw_library) (kw_local) (kw_location)
   (kw_locked) (kw_log) (kw_logfile) (kw_logging)
   (kw_logoff) (kw_logon) (kw_matched) (kw_maxlen)
@@ -279,7 +298,7 @@
   (kw_startup) (kw_statement) (kw_statistics) (kw_strict)
   (kw_struct) (kw_subpartition) (kw_suspend) (kw_sys)
   (kw_tablespace) (kw_tdo) (kw_time) (kw_to)
-  (kw_trailing) (kw_transaction) (kw_unlimited) (kw_unplug)
+  (kw_trailing) (kw_transaction) (kw_unique) (kw_unlimited) (kw_unplug)
   (kw_updating) (kw_use) (kw_using_nls_comp) (kw_validate)
   (kw_value) (kw_varray) (kw_varying) (kw_view)
   (kw_wait) (kw_within) (kw_without) (kw_work)
@@ -287,14 +306,16 @@
 ] @keyword
 
 ; ---------------------------------------------------------------------------
-; Parameters (refined after @variable so they can win)
+; Parameters (refined after @variable, and listed last within each pattern,
+; because Zed resolves same-range captures right-to-left: @variable.parameter
+; must come after @variable or the generic capture wins)
 ; ---------------------------------------------------------------------------
 
 (parameter_declaration_element
-  (identifier) @variable.parameter @variable)
+  (identifier) @variable @variable.parameter)
 
 (parameter_name
-  (identifier) @variable.parameter @variable)
+  (identifier) @variable @variable.parameter)
 
 ; Pseudocolumns and cursor attributes stay keywords: SQL%ROWCOUNT, c%ISOPEN
 [

@@ -16,8 +16,10 @@ Status: early MVP (grammar + minimal highlights).
 Tree-sitter queries name grammar nodes by hand, so a typo in `highlights.scm` silently
 breaks highlighting in Zed. `scripts/validate-queries.mjs` catches that before you open
 the editor: it parses the PL/SQL corpus in `corpus/plsql/`, then checks every node
-referenced by the query files against the pinned grammar's `node-types.json`, and checks
-`config.toml` against the fields Zed requires on each `[[brackets]]` entry.
+referenced by the query files against the pinned grammar's `node-types.json`, checks that
+each query compiles, and checks `config.toml` against the fields Zed requires on each
+`[[brackets]]` entry. Capture names (`@keyword`, `@type.builtin`, ...) are not checked
+against a Zed allow-list, so a mistyped capture name is only caught by eye.
 
 ```sh
 node scripts/validate-queries.mjs        # exit 0 = all good, 1 = problems, 2 = setup problem
