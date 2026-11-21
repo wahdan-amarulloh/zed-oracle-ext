@@ -1,0 +1,6 @@
+name = "PL/SQL"
+grammar = "plsql"
+
+[[brackets]]
+start = "("
+end = ")"
