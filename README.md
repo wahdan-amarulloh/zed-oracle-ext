@@ -1,20 +1,25 @@
 # Oracle PL/SQL for Zed
 
-Extension Zed yang menambahkan bahasa `PL/SQL` — grammar Tree-sitter
-([`njank/tree-sitter-plsql`](https://github.com/njank/tree-sitter-plsql), MIT) plus
-syntax highlighting.
+A [Zed](https://zed.dev) extension that adds `PL/SQL` language support: a Tree-sitter
+grammar ([`njank/tree-sitter-plsql`](https://github.com/njank/tree-sitter-plsql), MIT),
+syntax highlighting, bracket auto-closing, and comment toggling.
 
-Status: MVP awal (grammar + highlights minimal).
+Status: early MVP (grammar + minimal highlights).
 
-## Instalasi (dev extension)
+## Installation (dev extension)
 
-1. Zed → command palette → `zed: install dev extension` → pilih direktori repo ini.
-2. Buka file `.pls .pks .pkb .prc .fnc .trg .typ` — status bar harus menampilkan `PL/SQL`.
+1. In Zed, open the command palette and run `zed: install dev extension`, then select this repository's directory.
+2. Open a file with one of these extensions: `.pls`, `.pks`, `.pkb`, `.prc`, `.fnc`, `.trg`, `.typ`. The status bar should show `PL/SQL`.
 
-File `.sql` polos tetap memakai bahasa `SQL` bawaan Zed; `.sql` yang baris pertamanya
-berupa `CREATE [OR REPLACE] PROCEDURE|FUNCTION|PACKAGE|TRIGGER|TYPE` dibuka sebagai
-`PL/SQL`.
+## Limitations
 
-## Lisensi
+- Files with the `.sql` extension keep opening as SQL (Zed's SQL support). To open them
+  as PL/SQL, use the language selector in the status bar or Zed's `file_types` setting.
+- Files with no extension are detected as PL/SQL when their first line starts with
+  `CREATE [OR REPLACE] PROCEDURE|FUNCTION|PACKAGE|TRIGGER|TYPE`. Files whose extension is
+  already claimed by another language (e.g. `.sql`, `.txt`) keep that language.
+- No language server: no completion, diagnostics, go-to-definition, or formatting.
 
-MIT — lihat [LICENSE](LICENSE).
+## License
+
+MIT. See [LICENSE](LICENSE).
