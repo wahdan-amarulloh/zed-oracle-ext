@@ -1,4 +1,5 @@
 const IGNORED_ATOMS = new Set(["?", "*", "+", ".", "=", "#"]);
+const QUANTIFIERS = new Set(["?", "*", "+"]);
 
 function tokenize(src) {
   const tokens = [];
@@ -77,15 +78,21 @@ function nodeName(expr) {
   const first = expr.children.find(
     (child) => child.kind === "atom" && !child.value.endsWith(":") && !child.value.startsWith("@"),
   );
-  if (!first || first.value.startsWith("#") || IGNORED_ATOMS.has(first.value)) return null;
-  return first;
+  if (!first) return null;
+  const value = first.value.replace(/^!/, "");
+  if (value === "" || value.startsWith("#") || IGNORED_ATOMS.has(value)) return null;
+  return { value, line: first.line };
 }
 
 function assignCaptures(exprs) {
   for (let index = 0; index < exprs.length; index += 1) {
     const expr = exprs[index];
     if (expr.kind === "atom" && expr.value.startsWith("@")) {
-      const previous = exprs[index - 1];
+      let previousIndex = index - 1;
+      while (previousIndex >= 0 && exprs[previousIndex].kind === "atom" && QUANTIFIERS.has(exprs[previousIndex].value)) {
+        previousIndex -= 1;
+      }
+      const previous = exprs[previousIndex];
       if (previous && (previous.kind === "paren" || previous.kind === "bracket")) {
         previous.capture = expr.value.slice(1);
       }
@@ -126,16 +133,10 @@ export function extractNodeRefs(src) {
 export function findUnknownNodes(file, refs, knownNodes) {
   const problems = [];
   for (const ref of refs) {
-    if (ref.node === "_" || ref.node.startsWith("_")) continue;
+    if (ref.node.startsWith("_")) continue;
     if (knownNodes.has(ref.node)) continue;
     const capture = ref.capture ? ` @${ref.capture}` : "";
-    problems.push({
-      file,
-      line: ref.line,
-      node: ref.node,
-      capture: ref.capture,
-      message: `${file} line ${ref.line}: unknown node "${ref.node}"${capture}`,
-    });
+    problems.push({ message: `${file} line ${ref.line}: unknown node "${ref.node}"${capture}` });
   }
   return problems;
 }
@@ -199,13 +200,13 @@ export function bracketTables(src) {
 export function validateBrackets(src, label = "config.toml") {
   const problems = [];
   const tables = bracketTables(src).filter((table) => table.header.startsWith("[["));
-  tables.forEach((table, depthIndex) => {
-    const name = table.header.replace(/^\[+|\]+$/g, "").trim();
+  tables.forEach((table, ordinal) => {
+    const section = table.header.replace(/^\[+|\]+$/g, "").trim();
     for (const key of ["start", "end", "close", "newline"]) {
       if (!table.keys.has(key)) {
         problems.push({
           line: table.line,
-          message: `${label}:${table.line}: ${name}[${depthIndex + 1}] missing required Zed field "${key}"`,
+          message: `${label}:${table.line}: ${section}[${ordinal + 1}] missing required Zed field "${key}"`,
         });
       }
     }

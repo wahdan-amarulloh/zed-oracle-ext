@@ -40,3 +40,18 @@ test("validator exits nonzero when config.toml omits a brackets close field", as
   assert.match(output, /bad-config\.toml/);
   assert.match(output, /"close"|"newline"/);
 });
+
+test("validator reports a syntax error when a corpus file does not parse", async () => {
+  const brokenCorpus = path.join(root, "tests", "fixtures");
+  const result = await exec(["--corpus", brokenCorpus]);
+  assert.notEqual(result.code, 0);
+  const output = result.stdout + result.stderr;
+  assert.match(output, /broken-corpus\.pks/);
+  assert.match(output, /ERROR|MISSING|parse/i);
+});
+
+test("validator rejects an unknown grammar directory instead of silently passing", async () => {
+  const result = await exec(["--grammar", path.join(root, "tests", "fixtures")]);
+  assert.notEqual(result.code, 0);
+  assert.match(result.stdout + result.stderr, /node-types\.json/);
+});

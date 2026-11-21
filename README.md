@@ -20,14 +20,16 @@ referenced by the query files against the pinned grammar's `node-types.json`, an
 `config.toml` against the fields Zed requires on each `[[brackets]]` entry.
 
 ```sh
-node scripts/validate-queries.mjs        # exit 0 = all good, 1 = problems
+node scripts/validate-queries.mjs        # exit 0 = all good, 1 = problems, 2 = setup problem
 node --test tests/                       # unit + end-to-end tests for the validator
 ```
 
-Requirements: the `tree-sitter` CLI on `PATH` and a C compiler (the script builds the
-parser from `grammars/plsql` and caches the library next to it). `grammars/` is cloned by
-Zed on demand and is not committed, so clone `njank/tree-sitter-plsql` at the pinned
-commit into `grammars/plsql` first if it is missing.
+Requirements: the `tree-sitter` CLI on `PATH` (0.25 or newer — the CLI pinned by the
+grammar's own `package.json` is too old to check modern queries) and a C compiler (the
+script builds the parser from `grammars/plsql` and caches the library next to it).
+`grammars/` is cloned by Zed on demand and is not committed, so clone
+`njank/tree-sitter-plsql` at the commit pinned in `extension.toml` into `grammars/plsql`
+first if it is missing. The script also warns when the checkout is not at that commit.
 
 Options: `--query <file>` (repeatable), `--config <file>`, `--corpus <dir>`,
 `--grammar <dir>`, `--no-parse`.

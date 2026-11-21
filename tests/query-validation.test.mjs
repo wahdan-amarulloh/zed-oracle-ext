@@ -60,6 +60,30 @@ test("extractNodeRefs ignores comments, predicates and anonymous nodes", () => {
   );
 });
 
+test("extractNodeRefs strips negation and anchors a negated node's capture", () => {
+  const src = "(identifier) @variable\n(!keyword) @punctuation\n";
+  const refs = extractNodeRefs(src);
+  assert.deepEqual(
+    refs.map((r) => [r.node, r.capture]),
+    [
+      ["identifier", "variable"],
+      ["keyword", "punctuation"],
+    ],
+  );
+});
+
+test("extractNodeRefs keeps the capture when the node is quantified", () => {
+  const src = "(identifier)? @variable\n(comment_sl)* @comment\n";
+  const refs = extractNodeRefs(src);
+  assert.deepEqual(
+    refs.map((r) => [r.node, r.capture]),
+    [
+      ["identifier", "variable"],
+      ["comment_sl", "comment"],
+    ],
+  );
+});
+
 test("findUnknownNodes names the query file, capture and node", () => {
   const problems = findUnknownNodes(
     "languages/plsql/highlights.scm",
