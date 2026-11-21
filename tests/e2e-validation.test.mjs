@@ -22,6 +22,21 @@ test("validator passes on the committed corpus and highlights", async () => {
   assert.doesNotMatch(result.stdout, /unknown node/i);
 });
 
+test("validator checks every language query file by default", async () => {
+  const result = await exec();
+  assert.equal(result.code, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /highlights\.scm/);
+  assert.match(result.stdout, /brackets\.scm/);
+});
+
+test("validator rejects a bad brackets.scm node like it does for highlights", async () => {
+  const badQuery = path.join(root, "tests", "fixtures", "bad-brackets.scm");
+  const result = await exec(["--query", badQuery]);
+  assert.notEqual(result.code, 0);
+  assert.match(result.stdout + result.stderr, /unknown node "kw_brackets_nope"/);
+  assert.match(result.stdout + result.stderr, /@open/);
+});
+
 test("validator exits nonzero and names file, capture and node on a bad query", async () => {
   const badQuery = path.join(root, "tests", "fixtures", "bad-highlights.scm");
   const result = await exec(["--query", badQuery]);

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,14 +8,22 @@ import {
   validateBrackets,
   validateTomlSyntax,
 } from "./lib/query-validation.mjs";
+import {
+  ensureParserLibrary,
+  loadKnownNodes,
+  resolveTreeSitter,
+  run,
+  fail,
+} from "./lib/grammar-tools.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const POSIX = process.platform !== "win32";
+const languageDir = path.join(root, "languages", "plsql");
 
 const USAGE = `Usage: node scripts/validate-queries.mjs [options]
 
 Options:
-  --query <file>     Query file to validate (repeatable; default languages/plsql/highlights.scm)
+  --query <file>     Query file to validate (repeatable; defaults to every
+                     languages/plsql/*.scm: highlights.scm, brackets.scm, ...)
   --config <file>    Language config.toml to validate (default languages/plsql/config.toml)
   --corpus <dir>     PL/SQL corpus directory to parse (default corpus/plsql)
   --grammar <dir>    Pinned grammar directory (default grammars/plsql)
@@ -27,10 +34,18 @@ Exits 0 when every check passes, 1 when the repo has problems, and 2 when a
 required tool or input is missing.
 `;
 
+function languageQueries(dir) {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((entry) => entry.endsWith(".scm"))
+    .map((entry) => path.join(dir, entry))
+    .sort();
+}
+
 function parseArgs(argv) {
   const options = {
     queries: [],
-    config: path.join(root, "languages", "plsql", "config.toml"),
+    config: path.join(languageDir, "config.toml"),
     corpus: path.join(root, "corpus", "plsql"),
     grammar: path.join(root, "grammars", "plsql"),
     parseCorpus: true,
@@ -68,79 +83,12 @@ function parseArgs(argv) {
     }
   }
   if (options.queries.length === 0) {
-    options.queries.push(path.join(root, "languages", "plsql", "highlights.scm"));
+    options.queries = languageQueries(languageDir);
+    if (options.queries.length === 0) {
+      fail(`No query files found in ${path.relative(root, languageDir)}.`);
+    }
   }
   return options;
-}
-
-function fail(message) {
-  process.stderr.write(`${message}\n`);
-  process.exit(2);
-}
-
-function quoteForCmd(arg) {
-  if (arg === "") return '""';
-  if (!/[\s"&|<>^%!();]/.test(arg)) return arg;
-  return `"${arg.replace(/"/g, '""')}"`;
-}
-
-function run(cmd, args) {
-  if (POSIX) {
-    const result = spawnSync(cmd, args, { encoding: "utf8" });
-    if (result.error) return { status: null, stdout: "", stderr: result.error.message };
-    return { status: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
-  }
-  const line = `${quoteForCmd(cmd)} ${args.map(quoteForCmd).join(" ")}`;
-  const result = spawnSync(process.env.ComSpec || "cmd.exe", ["/d", "/s", "/c", `"${line}"`], {
-    encoding: "utf8",
-    windowsVerbatimArguments: true,
-  });
-  if (result.error) return { status: null, stdout: "", stderr: result.error.message };
-  return { status: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
-}
-
-function resolveTreeSitter() {
-  const probe = run("tree-sitter", ["--version"]);
-  if (probe.status !== 0) {
-    fail(
-      "Cannot run `tree-sitter --version`. This validator needs the tree-sitter CLI " +
-        "on PATH (0.25 or newer; the grammar's own pinned 0.20.7 is too old).",
-    );
-  }
-  const capability = run("tree-sitter", ["query", "--help"]);
-  if (capability.status !== 0 || !capability.stdout.includes("--lang-name")) {
-    fail(
-      "The tree-sitter CLI on PATH is too old: `tree-sitter query` does not support " +
-        "`--lang-name`, so a prebuilt parser cannot be used. Install tree-sitter 0.25 or newer.",
-    );
-  }
-  return probe.stdout.trim();
-}
-
-function parserLibraryName() {
-  if (process.platform === "win32") return "plsql.dll";
-  if (process.platform === "darwin") return "plsql.dylib";
-  return "plsql.so";
-}
-
-function loadKnownNodes(grammarDir) {
-  const nodeTypesPath = path.join(grammarDir, "src", "node-types.json");
-  if (!existsSync(nodeTypesPath)) {
-    fail(
-      `Missing ${path.relative(root, nodeTypesPath)}. The pinned grammar is cloned by Zed ` +
-        "and is not committed, so `grammars/plsql` must exist first (see README).",
-    );
-  }
-  let nodeTypes;
-  try {
-    nodeTypes = JSON.parse(readFileSync(nodeTypesPath, "utf8"));
-  } catch (error) {
-    fail(`Cannot parse ${path.relative(root, nodeTypesPath)}: ${error.message}`);
-  }
-  if (!Array.isArray(nodeTypes)) {
-    fail(`${path.relative(root, nodeTypesPath)} is not a node type list.`);
-  }
-  return new Set(nodeTypes.map((entry) => entry.type));
 }
 
 function pinnedCommit() {
@@ -163,28 +111,6 @@ function checkGrammarRevision(grammarDir, problems) {
         `${expected.slice(0, 12)}; node checks would run against the wrong grammar`,
     });
   }
-}
-
-function ensureParserLibrary(grammarDir) {
-  const lib = path.join(grammarDir, parserLibraryName());
-  const sourceFiles = ["parser.c", "scanner.c"].map((name) => path.join(grammarDir, "src", name));
-  const newestSource = Math.max(
-    ...sourceFiles.filter((file) => existsSync(file)).map((file) => statSync(file).mtimeMs),
-    0,
-  );
-  const fresh = existsSync(lib) && statSync(lib).mtimeMs >= newestSource;
-  if (fresh) return lib;
-
-  process.stdout.write(`building parser library from ${path.relative(root, grammarDir)} ...\n`);
-  const result = run("tree-sitter", ["build", grammarDir, "-o", lib]);
-  if (result.status !== 0 || !existsSync(lib)) {
-    fail(
-      `Failed to build the parser library; a C compiler is required.\n` +
-        `\`tree-sitter build ${path.relative(root, grammarDir)}\` said:\n` +
-        `${(result.stdout + result.stderr).trim()}`,
-    );
-  }
-  return lib;
 }
 
 const DEFAULT_SUFFIXES = ["pls", "pks", "pkb", "prc", "fnc", "trg", "typ"];
@@ -285,8 +211,8 @@ function main() {
   const version = resolveTreeSitter();
   process.stdout.write(`${version}\n`);
 
-  const knownNodes = loadKnownNodes(options.grammar);
-  const lib = ensureParserLibrary(options.grammar);
+  const knownNodes = loadKnownNodes(options.grammar, root);
+  const lib = ensureParserLibrary(options.grammar, root);
   process.stdout.write(`grammar node types: ${knownNodes.size}\n`);
 
   const problems = [];
