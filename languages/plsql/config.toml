@@ -14,15 +14,19 @@ tab_size = 1
 [[brackets]]
 start = "("
 end = ")"
+close = true
+newline = false
 
 [[brackets]]
 start = "'"
 end = "'"
 close = true
+newline = false
 not_in = ["comment", "string"]
 
 [[brackets]]
 start = "\""
 end = "\""
 close = true
+newline = false
 not_in = ["comment", "string"]
