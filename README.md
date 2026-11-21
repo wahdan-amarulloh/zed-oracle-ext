@@ -2,9 +2,11 @@
 
 A [Zed](https://zed.dev) extension that adds `PL/SQL` language support: a Tree-sitter
 grammar ([`njank/tree-sitter-plsql`](https://github.com/njank/tree-sitter-plsql), MIT),
-syntax highlighting, bracket auto-closing, and comment toggling.
+syntax highlighting, bracket matching and auto-closing, and comment toggling.
 
-Status: early MVP (grammar + minimal highlights).
+Status: early MVP (grammar, syntax highlighting, bracket matching, comment toggling).
+
+![PL/SQL highlighting in Zed](docs/verification/zed-plsql-highlighting.png)
 
 ## Installation (dev extension)
 
@@ -43,6 +45,8 @@ Options: `--query <file>` (repeatable), `--config <file>`, `--corpus <dir>`,
 - Files with no extension are detected as PL/SQL when their first line starts with
   `CREATE [OR REPLACE] PROCEDURE|FUNCTION|PACKAGE|TRIGGER|TYPE`. Files whose extension is
   already claimed by another language (e.g. `.sql`, `.txt`) keep that language.
+- Anchored types such as `table.column%TYPE` are only partially highlighted, and
+  dotted type names (`schema.type`) are not highlighted as types.
 - No language server: no completion, diagnostics, go-to-definition, or formatting.
 
 ## License
