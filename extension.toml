@@ -3,7 +3,7 @@ name = "Oracle PL/SQL"
 version = "0.0.1"
 schema_version = 1
 authors = ["wahdan-amarulloh"]
-description = "PL/SQL language support for Zed: Tree-sitter grammar and syntax highlighting."
+description = "PL/SQL language support: Tree-sitter grammar, syntax highlighting, indentation, bracket matching, and snippets."
 repository = "https://github.com/wahdan-amarulloh/zed-oracle-ext"
 
 snippets = ["./snippets/plsql.json"]
