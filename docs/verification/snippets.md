@@ -31,10 +31,30 @@ tab stops:
 No DML (no `INSERT`/`UPDATE`/`DELETE`/`MERGE`) and no Oracle builtin-function
 snippets. The test asserts both.
 
-## Pending: expansion check in Zed
+## Expansion check in Zed
 
 Acceptance criterion #6 also asks that each snippet be expanded in Zed and the
-result checked by hand. That step is **not yet done** — it needs the dev
-extension installed in a Zed window. Verify by installing as a dev extension,
-opening a `.pkb`, typing each prefix, and confirming the expansion and tab-stop
-order. Record the outcome below.
+result checked by hand.
+
+**Result: passed.** Verified by installing the dev extension, opening a `.pkb`,
+and typing each prefix.
+
+| Prefix | Expands to | Tab stops |
+| --- | --- | --- |
+| `pkg-spec` | `CREATE OR REPLACE PACKAGE ... AS ... END ...;` | name shared between header and `END`, body placeholder, `$0` |
+| `pkg-body` | `CREATE OR REPLACE PACKAGE BODY ... AS ... END ...;` | name shared, private declarations, nested procedure, `$0` |
+| `proc` | `CREATE OR REPLACE PROCEDURE ... IS BEGIN ... EXCEPTION ... END ...;` | name shared, params, body, handler, `$0` |
+| `func` | `CREATE OR REPLACE FUNCTION ... RETURN ... IS ... END ...;` | name shared, params, return type, body, handler, `$0` |
+| `trg` | `CREATE OR REPLACE TRIGGER ... BEFORE INSERT ON ... FOR EACH ROW ...` | name shared, timing, event, table, body, `$0` |
+| `cur` | `CURSOR ... IS SELECT ... FROM ... WHERE ...;` | cursor name, columns, table, predicate, `$0` |
+| `cur-loop` | `FOR ... IN ... LOOP ... END LOOP;` | record, cursor, body, `$0` |
+| `loop` | `LOOP ... EXIT WHEN ...; END LOOP;` | body, exit condition, `$0` |
+| `while` | `WHILE ... LOOP ... END LOOP;` | condition, body, `$0` |
+| `for-loop` | `FOR ... IN ... LOOP ... EXIT WHEN ...; END LOOP;` | index, range, body, exit condition, `$0` |
+| `if` | `IF ... THEN ... ELSIF ... THEN ... ELSE ... END IF;` | condition, branches, `$0` |
+| `case` | `CASE ... WHEN ... THEN ... ELSE ... END CASE;` | selector, arms, `$0` |
+| `exc` | `EXCEPTION WHEN ... THEN ... WHEN OTHERS THEN ...` | exception name, handler body, re-raise, `$0` |
+
+All 13 prefixes expanded, tab stops advanced in source order, and each block's
+closing keyword was present. Kept here as the record of the manual gate.
+
