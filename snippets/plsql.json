@@ -1,0 +1,177 @@
+{
+  "Package spec": {
+    "prefix": "pkg-spec",
+    "body": [
+      "CREATE OR REPLACE PACKAGE ${1:pkg_name} AS",
+      "",
+      "  ${2:-- public declarations}",
+      "",
+      "END ${1:pkg_name};",
+      "/",
+      "$0"
+    ],
+    "description": "Package specification skeleton"
+  },
+  "Package body": {
+    "prefix": "pkg-body",
+    "body": [
+      "CREATE OR REPLACE PACKAGE BODY ${1:pkg_name} AS",
+      "",
+      "  ${2:-- private declarations}",
+      "",
+      "  PROCEDURE ${3:private_proc} IS",
+      "  BEGIN",
+      "    NULL;",
+      "  END ${3:private_proc};",
+      "",
+      "END ${1:pkg_name};",
+      "/",
+      "$0"
+    ],
+    "description": "Package body skeleton"
+  },
+  "Procedure": {
+    "prefix": "proc",
+    "body": [
+      "CREATE OR REPLACE PROCEDURE ${1:proc_name} (",
+      "  ${2:p_param} IN ${3:VARCHAR2}",
+      ") IS",
+      "BEGIN",
+      "  ${4:NULL;}",
+      "EXCEPTION",
+      "  WHEN OTHERS THEN",
+      "    ${5:RAISE;}",
+      "END ${1:proc_name};",
+      "/",
+      "$0"
+    ],
+    "description": "Standalone procedure skeleton"
+  },
+  "Function": {
+    "prefix": "func",
+    "body": [
+      "CREATE OR REPLACE FUNCTION ${1:func_name} (",
+      "  ${2:p_param} IN ${3:VARCHAR2}",
+      ") RETURN ${4:VARCHAR2} IS",
+      "  v_result ${4:VARCHAR2};",
+      "BEGIN",
+      "  ${5:NULL;}",
+      "  RETURN v_result;",
+      "EXCEPTION",
+      "  WHEN OTHERS THEN",
+      "    ${6:RAISE;}",
+      "END ${1:func_name};",
+      "/",
+      "$0"
+    ],
+    "description": "Standalone function skeleton"
+  },
+  "Trigger": {
+    "prefix": "trg",
+    "body": [
+      "CREATE OR REPLACE TRIGGER ${1:trg_name}",
+      "  ${2:BEFORE} ${3:INSERT} ON ${4:table_name}",
+      "  FOR EACH ROW",
+      "BEGIN",
+      "  ${5:NULL;}",
+      "END ${1:trg_name};",
+      "/",
+      "$0"
+    ],
+    "description": "Row-level trigger skeleton"
+  },
+  "Cursor declaration": {
+    "prefix": "cur",
+    "body": [
+      "CURSOR ${1:c_name} IS",
+      "  SELECT ${2:column_name}",
+      "    FROM ${3:table_name}",
+      "   WHERE ${4:1 = 1};",
+      "$0"
+    ],
+    "description": "Explicit cursor declaration"
+  },
+  "Cursor FOR loop": {
+    "prefix": "cur-loop",
+    "body": [
+      "FOR ${1:rec} IN ${2:c_name} LOOP",
+      "  ${3:NULL;}",
+      "END LOOP;",
+      "$0"
+    ],
+    "description": "Cursor FOR loop over an explicit cursor"
+  },
+  "Basic loop": {
+    "prefix": "loop",
+    "body": [
+      "LOOP",
+      "  ${1:NULL;}",
+      "  EXIT WHEN ${2:v_done};",
+      "END LOOP;",
+      "$0"
+    ],
+    "description": "Unconditional LOOP with EXIT WHEN"
+  },
+  "While loop": {
+    "prefix": "while",
+    "body": [
+      "WHILE ${1:v_condition} LOOP",
+      "  ${2:NULL;}",
+      "END LOOP;",
+      "$0"
+    ],
+    "description": "WHILE loop"
+  },
+  "Numeric FOR loop": {
+    "prefix": "for-loop",
+    "body": [
+      "FOR ${1:i} IN ${2:1 .. 10} LOOP",
+      "  ${3:NULL;}",
+      "  EXIT WHEN ${4:v_done};",
+      "END LOOP;",
+      "$0"
+    ],
+    "description": "Numeric FOR loop with EXIT WHEN"
+  },
+  "IF statement": {
+    "prefix": "if",
+    "body": [
+      "IF ${1:v_condition} THEN",
+      "  ${2:NULL;}",
+      "ELSIF ${3:v_other} THEN",
+      "  ${4:NULL;}",
+      "ELSE",
+      "  ${5:NULL;}",
+      "END IF;",
+      "$0"
+    ],
+    "description": "IF / ELSIF / ELSE statement"
+  },
+  "CASE statement": {
+    "prefix": "case",
+    "body": [
+      "CASE ${1:v_selector}",
+      "  WHEN ${2:'A'} THEN",
+      "    ${3:NULL;}",
+      "  WHEN ${4:'B'} THEN",
+      "    ${5:NULL;}",
+      "  ELSE",
+      "    ${6:NULL;}",
+      "END CASE;",
+      "$0"
+    ],
+    "description": "Simple CASE statement"
+  },
+  "Exception handler": {
+    "prefix": "exc",
+    "body": [
+      "EXCEPTION",
+      "  WHEN ${1:NO_DATA_FOUND} THEN",
+      "    ${2:NULL;}",
+      "  WHEN OTHERS THEN",
+      "    ${3:RAISE;}",
+      "$0"
+    ],
+    "description": "EXCEPTION section with named and OTHERS handlers"
+  }
+}
