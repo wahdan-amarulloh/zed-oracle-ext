@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,39 +9,32 @@ const languageDir = path.join(root, "languages", "plsql");
 const configPath = path.join(languageDir, "config.toml");
 const INDENT = 4;
 
-function tomlString(source, key) {
-  const basic = source.match(new RegExp(`^\\s*${key}\\s*=\\s*"((?:[^"\\\\]|\\\\.)*)"`, "m"));
-  if (basic) return JSON.parse(`"${basic[1]}"`);
-  const literal = source.match(new RegExp(`^\\s*${key}\\s*=\\s*'([^']*)'`, "m"));
-  return literal ? literal[1] : null;
+function tomlLiteral(source, key) {
+  const match = source.match(new RegExp(`^\\s*${key}\\s*=\\s*'([^']*)'`, "m"));
+  return match ? match[1] : null;
 }
 
-function rustRegexToJs(pattern) {
-  let flags = "";
-  let body = pattern;
-  if (body.startsWith("(?i)")) {
-    flags += "i";
-    body = body.slice(4);
-  }
-  return new RegExp(body, flags);
+function regexFromPattern(pattern) {
+  if (pattern.startsWith("(?i)")) return new RegExp(pattern.slice(4), "i");
+  return new RegExp(pattern);
 }
 
 function readPatterns() {
   const source = readFileSync(configPath, "utf8");
-  const increase = tomlString(source, "increase_indent_pattern");
-  const decrease = tomlString(source, "decrease_indent_pattern");
+  const increase = tomlLiteral(source, "increase_indent_pattern");
+  const decrease = tomlLiteral(source, "decrease_indent_pattern");
   assert.ok(increase, "config.toml must define increase_indent_pattern");
   assert.ok(decrease, "config.toml must define decrease_indent_pattern");
   return {
-    increase: rustRegexToJs(increase),
-    decrease: rustRegexToJs(decrease),
+    increase: regexFromPattern(increase),
+    decrease: regexFromPattern(decrease),
   };
 }
 
-// Mirrors Zed's documented line-pattern indentation (crates/language/src/buffer.rs,
-// suggest_autoindents): a matching increase line indents the next row one level, a
-// matching decrease line outdents itself one level from the previous row, and a row
-// matched by both keeps the previous row's indent.
+// Simulation of Zed's line-pattern indentation, not a conformance test of Zed itself:
+// the real engine lives in crates/language/src/buffer.rs `suggest_autoindents`. A
+// matching increase line indents the following row one level, a matching decrease line
+// outdents that row one level, and a row matched by both keeps the previous row's indent.
 function indentsFor(lines, { increase, decrease }) {
   const indents = [0];
   for (let row = 1; row < lines.length; row += 1) {
@@ -163,14 +156,22 @@ for (const block of blocks) {
   });
 }
 
-test("closing and branch lines are never treated as openers", () => {
-  const { decrease } = readPatterns();
-  for (const line of ["END;", "END IF;", "END LOOP;", "END CASE;", "END pkg;", "EXCEPTION", "  ELSIF x THEN", "    WHEN OTHERS THEN"]) {
+test("closing lines outdent and never open a block", () => {
+  const { decrease, increase } = readPatterns();
+  for (const line of ["END;", "END IF;", "END LOOP;", "END CASE;", "END pkg;", "EXCEPTION"]) {
     assert.ok(decrease.test(line), `expected ${line} to outdent`);
-  }
-  const { increase } = readPatterns();
-  for (const line of ["END;", "END IF;", "END LOOP;", "END CASE;", "END pkg;"]) {
     assert.ok(!increase.test(line), `expected ${line} not to indent the next line`);
+  }
+  for (const partial of ["END LOOP", "END CASE", "end loop"]) {
+    assert.ok(!increase.test(partial), `expected unfinished ${partial} not to indent the next line`);
+  }
+});
+
+test("branch lines outdent but still indent their own body", () => {
+  const { decrease, increase } = readPatterns();
+  for (const line of ["  ELSIF x THEN", "    WHEN OTHERS THEN", "  ELSE"]) {
+    assert.ok(decrease.test(line), `expected ${line} to outdent`);
+    assert.ok(increase.test(line), `expected ${line} to indent its branch body`);
   }
 });
 
@@ -226,6 +227,14 @@ test("END LOOP and END CASE do not indent the line after them", () => {
   for (const closer of ["END LOOP;", "END CASE;", "end loop;", "END pkg;", "END LOOP", "END CASE"]) {
     assert.ok(!increase.test(closer), `expected ${closer} not to indent the next line`);
   }
+});
+test("a CASE statement that opens and closes on one line does not indent", () => {
+  const { increase } = readPatterns();
+  assert.ok(
+    !increase.test("CASE WHEN v_a = 1 THEN 2 ELSE 3 END;"),
+    "complete single-line CASE must not indent the next line",
+  );
+  assert.ok(increase.test("CASE v_status"), "CASE header still opens a block");
 });
 
 test("loop headers open a block", () => {
