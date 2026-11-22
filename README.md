@@ -2,9 +2,11 @@
 
 A [Zed](https://zed.dev) extension that adds `PL/SQL` language support: a Tree-sitter
 grammar ([`njank/tree-sitter-plsql`](https://github.com/njank/tree-sitter-plsql), MIT),
-syntax highlighting, bracket matching and auto-closing, and comment toggling.
+syntax highlighting, bracket matching and auto-closing, line-pattern indentation, and
+comment toggling.
 
-Status: early MVP (grammar, syntax highlighting, bracket matching, comment toggling).
+Status: early MVP (grammar, syntax highlighting, bracket matching, line-pattern
+indentation, comment toggling).
 
 ![PL/SQL highlighting in Zed](docs/verification/zed-plsql-highlighting.png)
 
@@ -47,6 +49,10 @@ Options: `--query <file>` (repeatable), `--config <file>`, `--corpus <dir>`,
   already claimed by another language (e.g. `.sql`, `.txt`) keep that language.
 - Anchored types such as `table.column%TYPE` are only partially highlighted, and
   dotted type names (`schema.type`) are not highlighted as types.
+- Indentation is driven by line patterns, not a Tree-sitter `indents.scm` query. Nested
+  block openers and closers align correctly, but indentation inside a multi-line
+  statement (for example a wrapped `SELECT`) is inherited from the previous line rather
+  than computed from syntax.
 - No language server: no completion, diagnostics, go-to-definition, or formatting.
 
 ## License

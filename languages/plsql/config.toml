@@ -4,6 +4,8 @@ path_suffixes = ["pls", "pks", "pkb", "prc", "fnc", "trg", "typ"]
 line_comments = ["-- "]
 first_line_pattern = '(?i)^\s*CREATE\s+(OR\s+REPLACE\s+)?(PROCEDURE|FUNCTION|PACKAGE|TRIGGER|TYPE)\b'
 autoclose_before = ")"
+increase_indent_pattern = '(?i)^\s*(?:(?:DECLARE|BEGIN|ELSE|LOOP)\s*(?:--.*)?$|(?:FOR|WHILE)\b[^\n]*\bLOOP\b\s*(?:--.*)?$|CASE\b[^\n]*|[^-\s][^\n]*\bTHEN\b\s*(?:--.*)?$|(?:[^-\s][^\n]*)?\b(?:PROCEDURE|FUNCTION|PACKAGE|TRIGGER|TYPE)\b[^\n]*\b(?:IS|AS)\b\s*(?:--.*)?$)'
+decrease_indent_pattern = '(?i)^\s*(?:END|EXCEPTION|ELSE|ELSIF|WHEN|BEGIN)\b'
 
 [block_comment]
 start = "/*"
