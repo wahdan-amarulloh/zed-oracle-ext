@@ -1,25 +1,20 @@
 # Zed Oracle Extension
 
-Extension Zed untuk developer PL/SQL (Oracle): menyediakan bahasa `PL/SQL` — grammar Tree-sitter, highlighting, outline, dan snippets — dengan struktur manifest yang siap menerima language server di fase berikutnya.
+A Zed extension for PL/SQL (Oracle) developers: provides the `PL/SQL` language with a Tree-sitter grammar, highlighting, outline, and snippets, with a manifest structure ready to accept a language server in a later phase.
 
 ## Language
 
-**PL/SQL**:
- Bahasa prosedural Oracle yang menjadi target extension; berbeda dari bahasa `SQL` bawaan Zed yang menangani file SQL generik.
+**PL/SQL**: Oracle's procedural language, the target of this extension; distinct from Zed's bundled `SQL` language, which handles generic SQL files.
 _Avoid_: Oracle SQL, PL/pgSQL
 
-**Syntax highlighting**:
- Pewarnaan token yang dihasilkan dari Tree-sitter queries (`highlights.scm`), tanpa kontribusi dari language server.
+**Syntax highlighting**: Token coloring produced from Tree-sitter queries (`highlights.scm`), with no contribution from a language server.
 _Avoid_: semantic highlighting, coloring
 
-**Language server**:
- Proses LSP eksternal yang diluncurkan extension melalui `language_server_command`; tidak termasuk dalam MVP.
+**Language server**: An external LSP process launched by the extension via `language_server_command`; not part of the MVP.
 _Avoid_: LSP server, code intelligence
 
-**Query validator**:
- Skrip `scripts/validate-queries.mjs` yang mem-parse `corpus/plsql/` lalu memastikan setiap nama node di file `.scm` ada di `node-types.json` grammar yang dipin, dan bahwa `config.toml` memenuhi skema Zed.
-_Avoid_: linter, linter query
+**Query validator**: The script `scripts/validate-queries.mjs`, which parses `corpus/plsql/`, then verifies that every node name in the `.scm` files exists in the pinned grammar's `node-types.json`, and that `config.toml` satisfies Zed's schema.
+_Avoid_: linter, query linter
 
-**Corpus**:
- Kumpulan file PL/SQL contoh di `corpus/plsql/` yang menjadi bahan parse validator; harus mencakup package spec, package body, procedure, function, trigger, cursor/loop, dan exception handler.
+**Corpus**: The set of sample PL/SQL files in `corpus/plsql/` that serve as parse input for the validator; must cover a package spec, package body, procedure, function, trigger, cursor/loop, and exception handler.
 _Avoid_: fixture, sample set
